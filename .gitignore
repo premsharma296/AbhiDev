@@ -9,3 +9,5 @@ services/site/build
 services/site/server-build
 services/site/prisma
 services/site/other/cache.db
+.env*.local
+.nx
