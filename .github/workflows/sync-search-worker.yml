@@ -1,0 +1,48 @@
+name: 🔄 Sync Search Worker
+
+on:
+  workflow_call:
+    inputs:
+      force:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      SEARCH_WORKER_URL:
+        required: true
+      SEARCH_WORKER_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Force a full search sync
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  sync:
+    name: 🔄 Sync Search Worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔄 Trigger search sync
+        env:
+          SEARCH_WORKER_URL: ${{ secrets.SEARCH_WORKER_URL }}
+          SEARCH_WORKER_TOKEN: ${{ secrets.SEARCH_WORKER_TOKEN }}
+          FORCE_SYNC: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          response=$(curl -s -w "\n%{http_code}" --max-time 300 \
+            -X POST \
+            -H "Authorization: Bearer ${SEARCH_WORKER_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"force\": ${FORCE_SYNC}}" \
+            "${SEARCH_WORKER_URL}/internal/sync")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | sed '$d')
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "Search sync failed (HTTP $http_code):"
+            echo "$body"
+            exit 1
+          fi
+          echo "Sync succeeded: $body"

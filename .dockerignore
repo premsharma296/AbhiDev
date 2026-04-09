@@ -1,0 +1,2 @@
+node_modules
+services/site/app/utils/prisma-generated.server

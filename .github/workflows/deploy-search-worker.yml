@@ -1,0 +1,46 @@
+name: ⚙️ Deploy Search Worker
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: ⚙️ Deploy Search Worker
+    runs-on: ubuntu-latest
+    environment: search-worker-production
+    concurrency:
+      group: deploy-search-worker-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v6
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: 📥 Install search worker deps
+        run: npm ci --workspace=search-worker
+
+      - name: 🔬 Lint search worker
+        run: npm run lint --workspace search-worker
+
+      - name: ʦ Typecheck search worker
+        run: npm run typecheck --workspace search-worker
+
+      - name: 🧪 Test search worker
+        run: npm run test --workspace search-worker
+
+      - name: ☁️ Deploy via Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: services/search-worker
+          command: deploy

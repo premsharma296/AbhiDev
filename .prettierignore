@@ -1,0 +1,16 @@
+.vscode/
+.DS_Store
+node_modules/
+
+/.cache
+/build
+/server-build
+/public/build
+/coverage
+
+/test-results/
+/playwright-report/
+/playwright/.cache/
+worker-configuration.d.ts
+package.json
+package-lock.json

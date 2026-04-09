@@ -1,0 +1,76 @@
+name: 🔎 Index Semantic Search (youtube)
+# Scheduled runs are disabled: YouTube indexing runs from a home NAS (see
+# other/nas/youtube/). GitHub runners are often blocked by YouTube. Use
+# workflow_dispatch below only for a rare manual run from GitHub if needed.
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_video_ids:
+        description: 'Comma-separated YouTube video IDs (optional)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  index:
+    name: 🔎 Index Semantic Search (youtube)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: 📥 Install site deps
+        run: npm ci --workspace=kentcdodds.com
+
+      - name: 🔎 Index youtube playlist
+        run: |
+          set -euo pipefail
+          if [ -n "${YOUTUBE_VIDEO_IDS:-}" ]; then
+            node other/semantic-search/index-youtube-playlist.ts --videos "$YOUTUBE_VIDEO_IDS"
+          else
+            node other/semantic-search/index-youtube-playlist.ts
+          fi
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_AI_GATEWAY_ID: ${{ secrets.CLOUDFLARE_AI_GATEWAY_ID }}
+          CLOUDFLARE_AI_EMBEDDING_GATEWAY_ID:
+            ${{ secrets.CLOUDFLARE_AI_EMBEDDING_GATEWAY_ID }}
+          CLOUDFLARE_AI_GATEWAY_AUTH_TOKEN:
+            ${{ secrets.CLOUDFLARE_AI_GATEWAY_AUTH_TOKEN }}
+          CLOUDFLARE_VECTORIZE_INDEX: ${{ secrets.CLOUDFLARE_VECTORIZE_INDEX }}
+          CLOUDFLARE_AI_EMBEDDING_MODEL:
+            ${{ secrets.CLOUDFLARE_AI_EMBEDDING_MODEL }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+
+          # Prefer setting this as a repository variable (or secret).
+          # If it is not set, the script uses a built-in default playlist ID.
+          YOUTUBE_PLAYLIST_ID:
+            ${{ vars.YOUTUBE_PLAYLIST_ID || secrets.YOUTUBE_PLAYLIST_ID }}
+
+          # Optional: force-index specific videos. Can be set either as a
+          # workflow_dispatch input or as a repository variable.
+          YOUTUBE_VIDEO_IDS:
+            ${{ github.event_name == 'workflow_dispatch' &&
+            inputs.youtube_video_ids || vars.YOUTUBE_VIDEO_IDS }}
+
+          # Without these, GitHub runners often get LOGIN_REQUIRED / bot blocks from
+          # YouTube; the indexer then never reaches R2/Vectorize. Same values as local
+          # `.env` — repository secrets, not MSW (the indexer does not use mocks).
+          YOUTUBE_COOKIE: ${{ secrets.YOUTUBE_COOKIE }}
+          YOUTUBE_USER_AGENT: ${{ secrets.YOUTUBE_USER_AGENT }}
+
+  sync-search-worker:
+    needs: index
+    uses: ./.github/workflows/sync-search-worker.yml
+    secrets: inherit

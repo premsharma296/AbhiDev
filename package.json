@@ -1,0 +1,47 @@
+{
+  "name": "kcd-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": "24",
+    "npm": ">=10"
+  },
+  "imports": {
+    "#app/*": "./services/site/app/*",
+    "#other/*": "./other/*",
+    "#tests/*": "./services/site/tests/*"
+  },
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace abhidev.com",
+    "start": "npm run start --workspace abhidev.com",
+    "start:mocks": "npm run start:mocks --workspace abhidev.com",
+    "build": "npm run build --workspace abhidev.com",
+    "predeploy:healthcheck": "npm run predeploy:healthcheck --workspace abhidev.com",
+    "prime-cache:prod": "npm run prime-cache:prod --workspace abhidev.com",
+    "prime-cache:mocks": "npm run prime-cache:mocks --workspace abhidev.com",
+    "test": "npm run test --workspace abhidev.com",
+    "test:backend": "npm run test:backend --workspace abhidev.com",
+    "test:backend:watch": "npm run test:backend:watch --workspace abhidev.com",
+    "test:browser": "npm run test:browser --workspace abhidev.com",
+    "test:browser:watch": "npm run test:browser:watch --workspace abhidev.com",
+    "test:e2e:dev": "npm run test:e2e:dev --workspace abhidev.com",
+    "test:e2e:run": "npm run test:e2e:run --workspace abhidev.com",
+    "test:e2e:install": "npm run test:e2e:install --workspace abhidev.com",
+    "lint": "npm run lint --workspace abhidev.com",
+    "lint:all": "nx run-many -t lint",
+    "format": "npm run format --workspace abhidev.com",
+    "typecheck": "npm run typecheck --workspace abhidev.com",
+    "typecheck:all": "nx run-many -t typecheck",
+    "validate": "npm run validate --workspace abhidev.com",
+    "setup": "npm install && npm run setup --workspace abhidev.com",
+    "nx:graph": "nx graph"
+  },
+  "devDependencies": {
+    "@epic-web/config": "^2.0.0",
+    "nx": "^22.5.4"
+  }
+}
