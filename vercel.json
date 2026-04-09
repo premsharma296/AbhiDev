@@ -1,5 +1,5 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npm run build --workspace abhidev.com",
+  "buildCommand": "cd services/site && npm run build:router",
   "outputDirectory": "services/site/build/client"
 }

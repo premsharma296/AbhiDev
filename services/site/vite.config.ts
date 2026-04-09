@@ -38,7 +38,7 @@ if (SENTRY_UPLOAD && MODE === 'production') {
 	}
 }
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ ssrBuild }) => {
 	return {
 		plugins: [
 			cjsInterop({
@@ -78,6 +78,7 @@ export default defineConfig(async () => {
 			// to `sourcemap: 'hidden'` (and keep uploading to Sentry).
 			sourcemap: true,
 			cssMinify: MODE === 'production',
+			ssr: ssrBuild,
 			rollupOptions: {
 				external: [/node:.*/, 'stream', 'crypto'],
 			},
