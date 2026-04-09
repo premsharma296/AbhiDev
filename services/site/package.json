@@ -24,7 +24,7 @@
   "homepage": "https://github.com/kentcdodds/kentcdodds.com#readme",
   "type": "module",
   "scripts": {
-    "postinstall": "prisma generate --schema ./prisma/schema.prisma",
+    "postinstall": "node -e \"const fs=require('fs'); const path=require('path'); const child=require('child_process'); let schema=path.join(process.cwd(),'prisma','schema.prisma'); if (!fs.existsSync(schema)) schema=path.join(process.cwd(),'services','site','prisma','schema.prisma'); if (!fs.existsSync(schema)) { console.error('Prisma schema not found:', schema); process.exit(1); } const result = child.spawnSync('prisma', ['generate', '--schema', schema], { stdio: 'inherit' }); process.exit(result.status || 0);\"",
     "clean": "rimraf ../../node_modules/.cache ./server/dist ./build ./public/build",
     "prebuild": "npm run clean && echo All clean ✨",
     "build": "npm run build:router && npm run build:server && npm run build:info",
