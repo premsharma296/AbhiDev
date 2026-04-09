@@ -19,7 +19,6 @@ import {
 } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { type KCDHandle } from '#app/types.ts'
-import { getInstanceInfo } from '#app/utils/litefs-js.server.ts'
 import {
 	useCapturedRouteError,
 	getDisplayUrl,
@@ -49,22 +48,10 @@ import proseStyles from './styles/prose.css?url'
 import tailwindStyles from './styles/tailwind.css?url'
 import vendorStyles from './styles/vendors.css?url'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { getClientSession } from './utils/client.server.ts'
-import { getPublicEnv } from './utils/env.server.ts'
-import { getLoginInfoSession } from './utils/login.server.ts'
 import { useNonce } from './utils/nonce-provider.ts'
-import { getLatestPodcastSeasonLinks } from './utils/podcast-latest-season.server.ts'
 import { getSocialMetas } from './utils/seo.ts'
-import { getSession } from './utils/session.server.ts'
 import { TeamProvider, useTeam } from './utils/team-provider.tsx'
-import { getTheme } from './utils/theme.server.ts'
 import { useTheme } from './utils/theme.tsx'
-import {
-	getServerTimeHeader,
-	time,
-	withTimeout,
-} from './utils/timing.server.ts'
-import { getUserInfo } from './utils/user-info.server.ts'
 
 export const handle: KCDHandle & { id: string } = {
 	id: 'root',
@@ -136,6 +123,26 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const timings = {}
 	const loaderStart = performance.now()
 	const podcastLinksAbortController = new AbortController()
+
+	// Dynamic imports for server functions
+	const [
+		{ getSession },
+		{ getClientSession },
+		{ getLoginInfoSession },
+		{ getLatestPodcastSeasonLinks },
+		{ getUserInfo },
+		{ getTheme },
+		{ getServerTimeHeader, time, withTimeout },
+	] = await Promise.all([
+		import('./utils/session.server.ts'),
+		import('./utils/client.server.ts'),
+		import('./utils/login.server.ts'),
+		import('./utils/podcast-latest-season.server.ts'),
+		import('./utils/user-info.server.ts'),
+		import('./utils/theme.server.ts'),
+		import('./utils/timing.server.ts'),
+	])
+
 	const session = await getSession(request)
 	const [
 		user,
@@ -147,7 +154,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 		session.getUser({ timings }),
 		getClientSession(request, session.getUser({ timings })),
 		getLoginInfoSession(request),
-		getInstanceInfo().then((i) => i.primaryInstance),
+		(async () => {
+			const { getInstanceInfo } = await import('#app/utils/litefs-js.server.ts')
+			return getInstanceInfo().then((i) => i.primaryInstance)
+		})(),
 		time(
 			withTimeout(
 				getLatestPodcastSeasonLinks({

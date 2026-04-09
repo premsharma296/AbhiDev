@@ -1,10 +1,9 @@
 import { data as json, redirect, Form } from 'react-router'
 import { Button } from '#app/components/button.tsx'
-import { getEnv } from '#app/utils/env.server.ts'
-import { requireUser } from '#app/utils/session.server.ts'
 import { type Route } from './+types/oauth.authorize'
 
 export async function loader({ request }: Route.LoaderArgs) {
+	const { requireUser } = await import('#app/utils/session.server.ts')
 	const user = await requireUser(request)
 	const url = new URL(request.url)
 	const clientId = url.searchParams.get('client_id')
@@ -16,6 +15,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+	const [{ requireUser }, { getEnv }] = await Promise.all([
+		import('#app/utils/session.server.ts'),
+		import('#app/utils/env.server.ts'),
+	])
 	const user = await requireUser(request)
 	const url = new URL(request.url)
 	const requestParams = Object.fromEntries(url.searchParams)

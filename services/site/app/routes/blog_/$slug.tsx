@@ -41,7 +41,6 @@ import {
 	reuseUsefulLoaderHeaders,
 } from '#app/utils/misc.ts'
 import { type NotFoundMatch } from '#app/utils/not-found-matches.ts'
-import { getNotFoundSuggestions } from '#app/utils/not-found-suggestions.server.ts'
 import { prisma } from '#app/utils/prisma.server.ts'
 import { getUser } from '#app/utils/session.server.ts'
 import { teamEmoji, useTeam } from '#app/utils/team-provider.tsx'
@@ -86,7 +85,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 	if (!page) {
 		// Avoid caching/creating per-slug stats entries for random 404 slugs. (issue #461)
 		const pathname = new URL(request.url).pathname
-		const [recommendations, suggestions] = await Promise.all([
+		const [{ getNotFoundSuggestions }, recommendations] = await Promise.all([
+			import('#app/utils/not-found-suggestions.server.ts'),
 			getBlogRecommendations({
 				request,
 				timings,
@@ -94,8 +94,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 				keywords: [],
 				exclude: [params.slug],
 			}),
-			getNotFoundSuggestions({ request, pathname, limit: 8 }),
 		])
+		const suggestions = await getNotFoundSuggestions({ request, pathname, limit: 8 })
 		const headers = {
 			// Don't cache speculative 404 slugs for long.
 			'Cache-Control': 'private, max-age=60',

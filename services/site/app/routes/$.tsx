@@ -11,7 +11,6 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ErrorPage, FourOhFour } from '#app/components/errors.tsx'
 import { Facepalm } from '#app/components/kifs.tsx'
 import { type NotFoundMatch } from '#app/utils/not-found-matches.ts'
-import { getNotFoundSuggestions } from '#app/utils/not-found-suggestions.server.ts'
 
 export async function loader({ request }: { request: Request }) {
 	const accept = request.headers.get('accept') ?? ''
@@ -22,6 +21,7 @@ export async function loader({ request }: { request: Request }) {
 	}
 
 	const pathname = new URL(request.url).pathname
+	const { getNotFoundSuggestions } = await import('#app/utils/not-found-suggestions.server.ts')
 	const suggestions = await getNotFoundSuggestions({
 		request,
 		pathname,

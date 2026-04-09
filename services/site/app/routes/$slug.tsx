@@ -20,7 +20,6 @@ import {
 } from '#app/utils/mdx.tsx'
 import { requireValidSlug, reuseUsefulLoaderHeaders } from '#app/utils/misc.ts'
 import { type NotFoundMatch } from '#app/utils/not-found-matches.ts'
-import { getNotFoundSuggestions } from '#app/utils/not-found-suggestions.server.ts'
 import { getServerTimeHeader } from '#app/utils/timing.server.ts'
 import { type Route } from './+types/$slug'
 
@@ -51,10 +50,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 	)
 
 	if (!page) {
-		const [recommendations, suggestions] = await Promise.all([
+		const [{ getNotFoundSuggestions }, recommendations] = await Promise.all([
+			import('#app/utils/not-found-suggestions.server.ts'),
 			getBlogRecommendations({ request, timings }),
-			getNotFoundSuggestions({ request, pathname, limit: 8 }),
 		])
+		const suggestions = await getNotFoundSuggestions({ request, pathname, limit: 8 })
 		const data: {
 			recommendations: Array<unknown>
 			possibleMatches?: Array<NotFoundMatch>
